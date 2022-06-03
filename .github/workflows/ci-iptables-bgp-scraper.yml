@@ -23,3 +23,10 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.0
+      with:
+        # Artifact name
+        name: artifact
+        path: iptables-bgp-scraper.tar
