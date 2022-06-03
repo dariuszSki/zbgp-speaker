@@ -20,6 +20,7 @@ jobs:
 
     - name: Build
       run: |
+        pwd
         go build
         export VERSION=$(./iptables-bgp-scraper version)
         tar -czf iptables-bgp-scraper-$VERSION.gz iptables-bgp-scraper
