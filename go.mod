@@ -1,4 +1,4 @@
-module iptables-bgp-scraper/m/v2
+module github.com/dariuszSki/iptables-bgp-scraper
 
 go 1.18
 
