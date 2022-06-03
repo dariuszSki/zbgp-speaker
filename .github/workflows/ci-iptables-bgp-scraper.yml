@@ -24,11 +24,8 @@ jobs:
         
     - name: Build
       run: |
-        ls
-        go build
-        ls
-        VERSION=$(./iptables-bgp-scraper version)
-        /usr/bin/tar -czf iptables-bgp-scraper-$VERSION.gz iptables-bgp-scraper
+        go build -v
+        /usr/bin/tar -czf iptables-bgp-scraper-v0.1.tar.gz iptables-bgp-scraper
         ls
 
     - name: Test
@@ -39,4 +36,4 @@ jobs:
       with:
         # Artifact name
         name: artifact
-        path: iptables-bgp-scraper-$VERSION.gz
+        path: iptables-bgp-scraper-v0.1.tar.gz
