@@ -19,14 +19,17 @@ jobs:
         go-version: 1.18
 
     - name: Build
-      run: go build -v ./...
+      run: |
+        go build
+        export VERSION=$(./iptables-bgp-scraper version)
+        tar -czf iptables-bgp-scraper-$VERSION.gz iptables-bgp-scraper
 
     - name: Test
-      run: go test -v ./...
+      run: go test 
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.0
       with:
         # Artifact name
         name: artifact
-        path: iptables-bgp-scraper.tar
+        path: iptables-bgp-scraper-$VERSION.gz
