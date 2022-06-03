@@ -25,8 +25,6 @@ jobs:
     - name: Build
       run: |
         go build -v
-        /usr/bin/tar -czf iptables-bgp-scraper-v0.1.tar.gz iptables-bgp-scraper
-        ls
 
     - name: Test
       run: go test 
@@ -35,5 +33,5 @@ jobs:
       uses: actions/upload-artifact@v3.1.0
       with:
         # Artifact name
-        name: artifact
-        path: iptables-bgp-scraper-v0.1.tar.gz
+        name: iptables-bgp-scraper-v0.1
+        path: iptables-bgp-scraper
