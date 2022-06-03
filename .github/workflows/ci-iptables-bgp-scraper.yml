@@ -7,24 +7,29 @@ on:
     branches: [ master ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64]
     steps:
-    - uses: actions/checkout@v3
-
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+      
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
-
+        
     - name: Build
       run: |
         ls
         go build
         ls
-        export VERSION=$(./iptables-bgp-scraper version)
-        tar -czf iptables-bgp-scraper-$VERSION.gz iptables-bgp-scraper
+        VERSION=$(./iptables-bgp-scraper version)
+        /usr/bin/tar -czf iptables-bgp-scraper-$VERSION.gz iptables-bgp-scraper
+        ls
 
     - name: Test
       run: go test 
