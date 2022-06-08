@@ -45,12 +45,12 @@ jobs:
           release_name: v${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref }}
         env:
-          GITHUB_TOKEN: ${{ github.token }
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.0
         env:
-          GITHUB_TOKEN: ${{ github.token }
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.release.outputs.upload_url }}
           asset_path: iptables-bgp-scraper.tar.gz
