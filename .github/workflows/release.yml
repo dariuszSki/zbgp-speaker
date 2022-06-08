@@ -27,7 +27,7 @@ jobs:
           go build -v
 
       - name: version
-        run: "::set-output name=version::$(./iptables-bgp-scraper version)"
+        run: echo "::set-output name=version::$(./iptables-bgp-scraper version)"
         id: version
 
       - name: Test
