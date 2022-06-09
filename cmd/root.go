@@ -10,7 +10,7 @@ import (
 var (
 	logger  = pfxlog.Logger()
 	rootCmd = &cobra.Command{
-		Use: "zbgp",
+		Use: "iptables-bgp-scraper",
 		Long: `ziti app to utilize gobgp server to advertize services to bgp neighbors; one needs to stand up
 a gobgp server in this version first before this can be run.`,
 		Run: zlogs,
