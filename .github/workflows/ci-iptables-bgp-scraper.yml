@@ -37,9 +37,3 @@ jobs:
       with:
         name: iptables-bgp-scraper-v0.1
         path: iptables-bgp-scraper.tar
-        
-    - name: Download linux release artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: linux-release-v0.1
-        path: release/
