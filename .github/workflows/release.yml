@@ -1,0 +1,58 @@
+---
+name: release
+
+on:
+  push:
+    branches:
+      - release*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64]
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+          
+      - name: Build
+        run: |
+          go build -v
+
+      - name: version
+        run: echo "::set-output name=version::$(./iptables-bgp-scraper version)"
+        id: version
+
+      - name: Test
+        run: go test 
+        
+      - name: Tar files
+        run: tar -zcvf iptables-bgp-scraper.tar.gz iptables-bgp-scraper
+
+      - name: release
+        uses: actions/create-release@v1
+        id: release
+        with:
+          draft: false
+          prerelease: false
+          release_name: v${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: iptables-bgp-scraper.tar.gz
+          asset_name: iptables-bgp-scraper.tar.gz
+          asset_content_type: application/gzip
