@@ -41,3 +41,4 @@ jobs:
       with:
         name: iptables-bgp-scraper-v${{ steps.version.outputs.version }}
         path: iptables-bgp-scraper.tar
+
