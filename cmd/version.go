@@ -14,6 +14,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number of zgbp",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("0.1.1")
+		fmt.Println("0.1.0")
 	},
 }
