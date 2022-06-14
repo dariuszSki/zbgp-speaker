@@ -38,7 +38,7 @@ jobs:
         run: tar -zcvf iptables-bgp-scraper.tar.gz iptables-bgp-scraper
 
       - name: Upload a Build Artifact for testing
-        if: github.ref_name == '!release*'
+        if: github.ref_name != 'release*'
         uses: actions/upload-artifact@v3.1.0
         with:
           name: iptables-bgp-scraper
