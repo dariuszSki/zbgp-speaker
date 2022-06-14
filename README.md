@@ -26,8 +26,8 @@ The configuration file that needs to be created for the bgp speaker. The minimum
 ```
 
 More about the configuration options can be found at [bgp configuration example](https://github.com/osrg/gobgp/blob/master/docs/sources/configuration.md). 
-Keep in mind that th purpise of thsi apop si to use the server to announce prefixes extracted from Ziti Service and not import any rpefizex from neighbors.
-Thus, the example shown above is more than enough to satisfy the given purpose.
+Keep in mind that the main objective of this app is to use the server to announce prefixes extracted from Ziti Services and not import any prefixes from neighbors.
+Thus, the example shown above is more than enough to satisfy the given objective.
 
 **Cli options**
 ```bash
@@ -73,4 +73,9 @@ Global Flags:
 **Example to run in background**
 ```bash
 sudo nohup ./iptables_bgp_scraper client server -c /etc/gobgpd.conf &
+```
+
+To create a stackdump in runtime, plese run this command:
+```bash
+ sudo kill -3 $(pidof iptables_bgp_scraper)
 ```
