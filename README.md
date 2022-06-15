@@ -31,7 +31,7 @@ Thus, the example shown above is more than enough to satisfy the given objective
 
 **Cli options**
 ```bash
-./iptables_bgp_scraper_linux -h
+./iptables-bgp-scraper -h
 an app that scrapes iptables rules for Ziti Services under NF-INTERCEPTS Chain, then utilizes gobgp server to advertize scraped prefixes to bgp neighbors.
 
 Usage:
@@ -52,7 +52,7 @@ Use "iptables-bgp-scraper [command] --help" for more information about a command
 
 ----------------------------------------------
 
-./iptables_bgp_scraper_linux client server -h
+./iptables-bgp-scraper client server -h
 This command runs gobgp in server mode that the client can use a a bgp speaker to neighbors
 
 Usage:
@@ -72,10 +72,10 @@ Global Flags:
 
 **Example to run in background**
 ```bash
-sudo nohup ./iptables_bgp_scraper client server -c /etc/gobgpd.conf &
+sudo nohup ./iptables-bgp-scraper client server -c /etc/gobgpd.conf &
 ```
 
-To create a stackdump in runtime, plese run this command:
+To create a stackdump in runtime, please run this command:
 ```bash
- sudo kill -3 $(pidof iptables_bgp_scraper)
+ sudo kill -3 $(pidof iptables-bgp-scraper)
 ```
