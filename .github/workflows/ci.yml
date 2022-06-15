@@ -3,9 +3,6 @@ name: ci
 
 on:
   push:
-    branches:
-      - '*'
-      - feature/**
     branches-ignore:
       - release-v*
   pull_request:
