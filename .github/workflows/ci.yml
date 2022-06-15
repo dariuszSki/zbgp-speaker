@@ -41,7 +41,7 @@ jobs:
           path: iptables-bgp-scraper.tar.gz
 
       - name: release
-        if: github.event.pull_request.merged == true
+        if: startsWith(github.ref, 'refs/heads/release-v')
         uses: actions/create-release@v1
         id: release
         with:
@@ -53,7 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload a Build Artifact for release
-        if: github.event.pull_request.merged == true
+        if: startsWith(github.ref, 'refs/heads/release-v')
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
