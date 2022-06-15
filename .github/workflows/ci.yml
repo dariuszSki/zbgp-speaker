@@ -4,8 +4,13 @@ name: ci
 on:
   push:
     branches:
-      - '*'
-      - 'feature/**'
+      - *
+      - feature/**
+    branches-ignore:
+      - release-v*
+  pull_request:
+    branches:
+      - release-v*
 
 jobs:
   build:
@@ -38,14 +43,13 @@ jobs:
         run: tar -zcvf iptables-bgp-scraper.tar.gz iptables-bgp-scraper
 
       - name: Upload a Build Artifact for testing
-        if: startsWith(github.ref, 'refs/heads/release') == false || github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3.1.0
         with:
           name: iptables-bgp-scraper
           path: iptables-bgp-scraper.tar.gz
 
       - name: release
-        if: startsWith(github.ref, 'refs/heads/release')
+        if: github.event.pull_request.merged
         uses: actions/create-release@v1
         id: release
         with:
@@ -57,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload a Build Artifact for release
-        if: github.event.pull_request.merged && startsWith(github.ref, 'refs/heads/release')
+        if: github.event.pull_request.merged
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
