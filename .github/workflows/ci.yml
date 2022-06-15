@@ -1,13 +1,7 @@
 ---
 name: ci
 
-on:
-  push:
-    branches-ignore:
-      - release-v*
-  pull_request:
-    branches:
-      - release-v*
+on: [push, pull_request]
 
 jobs:
   build:
@@ -47,19 +41,19 @@ jobs:
           path: iptables-bgp-scraper.tar.gz
 
       - name: release
-        if: github.event.pull_request.merged == true
+        if: startsWith(github.ref, 'refs/heads/release-v') && github.event.pull_request.merged
         uses: actions/create-release@v1
         id: release
         with:
           draft: false
           prerelease: false
-          release_name: v${{ steps.version.outputs.version }}
+          release_name: v${{ steps.version.outputs.version }} &&
           tag_name: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload a Build Artifact for release
-        if: github.event.pull_request.merged == true
+        if: startsWith(github.ref, 'refs/heads/release-v') && github.event.pull_request.merged
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
