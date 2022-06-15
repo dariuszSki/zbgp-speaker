@@ -3,5 +3,8 @@ package main
 import "github.com/dariuszSki/iptables-bgp-scraper/cmd"
 
 func main() {
-	cmd.Execute()
+	err := cmd.Execute()
+	if err != nil {
+		return
+	}
 }
