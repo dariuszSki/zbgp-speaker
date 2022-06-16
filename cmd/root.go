@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/michaelquigley/pfxlog"
+	"github.com/openziti/foundation/util/debugz"
 	"github.com/osrg/gobgp/v3/pkg/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -10,10 +11,9 @@ import (
 var (
 	logger  = pfxlog.Logger()
 	rootCmd = &cobra.Command{
-		Use: "zbgp",
-		Long: `ziti app to utilize gobgp server to advertize services to bgp neighbors; one needs to stand up
-a gobgp server in this version first before this can be run.`,
-		Run: zlogs,
+		Use:  "iptables-bgp-scraper",
+		Long: "an app that scrapes iptables rules for Ziti Services under NF-INTERCEPTS Chain, then utilizes gobgp server to advertize scraped prefixes to bgp neighbors.",
+		Run:  zlogs,
 	}
 )
 
@@ -36,6 +36,7 @@ func init() {
 		}
 	}
 	pfxlog.GlobalInit(logrus.InfoLevel, options)
+	debugz.AddStackDumpHandler()
 	rootCmd.PersistentFlags().StringP("log-level", "l", "Info", "specifying log level")
 }
 

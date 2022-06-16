@@ -6,6 +6,10 @@ require (
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/michaelquigley/pfxlog v0.6.9
+<<<<<<< HEAD
+=======
+	github.com/openziti/foundation v0.17.28
+>>>>>>> d10a523d628cebb725c2a43bb8b76e41de442dfb
 	github.com/osrg/gobgp/v3 v3.3.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
@@ -26,7 +30,11 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+<<<<<<< HEAD
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
+=======
+	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+>>>>>>> d10a523d628cebb725c2a43bb8b76e41de442dfb
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
@@ -39,7 +47,11 @@ require (
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+<<<<<<< HEAD
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+=======
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+>>>>>>> d10a523d628cebb725c2a43bb8b76e41de442dfb
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
