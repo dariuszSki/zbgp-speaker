@@ -1,7 +1,5 @@
 # iptables-bgp-scraper
-<<<<<<< HEAD
-This is an app that scrapes iptables rules from NF-INTERCEPT chain for Ziti Services and updates the gobgp server to distributes these service prefixes out to neighbors.
-=======
+
 This is an app that scrapes iptables rules from NF-INTERCEPT chain for Ziti Services and updates the gobgp server
 to distributes these service prefixes out to neighbors. It utilizes gobgp server library to stand up a bgp speaker and 
 configures it using gobgp apis. The open source project can be found at [gobgp github](https://github.com/osrg/gobgp)
@@ -82,4 +80,3 @@ To create a stackdump in runtime, please run this command:
 ```bash
  sudo kill -3 $(pidof iptables-bgp-scraper)
 ```
->>>>>>> d10a523d628cebb725c2a43bb8b76e41de442dfb
