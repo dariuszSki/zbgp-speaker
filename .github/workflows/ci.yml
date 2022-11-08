@@ -40,25 +40,3 @@ jobs:
           name: iptables-bgp-scraper
           path: iptables-bgp-scraper.tar.gz
 
-      - name: release
-        if: startsWith(github.ref, 'refs/heads/release-v')
-        uses: actions/create-release@v1
-        id: release
-        with:
-          draft: false
-          prerelease: false
-          release_name: v${{ steps.version.outputs.version }}
-          tag_name: v${{ steps.version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Upload a Build Artifact for release
-        if: startsWith(github.ref, 'refs/heads/release-v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.release.outputs.upload_url }}
-          asset_path: iptables-bgp-scraper.tar.gz
-          asset_name: iptables-bgp-scraper.tar.gz
-          asset_content_type: application/gzip
