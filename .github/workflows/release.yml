@@ -6,8 +6,7 @@ on:
     types: [closed]
 
 jobs:
-  build:
-    if: startsWith(github.ref, 'refs/heads/release-v')
+  release_build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
