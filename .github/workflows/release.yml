@@ -6,7 +6,7 @@ on:
     types: [closed]
 
 jobs:
-  if_merged:
+  run_if:
     if: github.event.pull_request.merged == true && startsWith(github.ref, 'refs/heads/release-v')
     runs-on: ubuntu-latest
     strategy:
