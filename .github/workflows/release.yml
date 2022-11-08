@@ -2,8 +2,8 @@
 name: release
 
 on:
-  pull_request:
-    types: [closed]
+  release:
+    types: [published]
 
 jobs:
   release_build:
@@ -26,8 +26,12 @@ jobs:
           go build -v
 
       - name: version
-        run: echo "::set-output name=version::$(./iptables-bgp-scraper version)"
-        id: version
+        run: echo "TAG=${GITHUB_REF#refs/tags/" >> $GITHUB_ENV
+
+      - name: Print TAG to check release
+        run: |
+          echo $TAG
+          echo ${{ env.TAG }}
         
       - name: Tar files
         run: tar -zcvf iptables-bgp-scraper.tar.gz iptables-bgp-scraper
@@ -38,8 +42,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: v${{ steps.version.outputs.version }}
-          tag_name: v${{ steps.version.outputs.version }}
+          release_name: $TAG
+          tag_name: ${{ env.TAG }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
