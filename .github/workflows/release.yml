@@ -6,8 +6,8 @@ on:
     types: [closed]
 
 jobs:
-  run_if:
-    if: github.event.pull_request.merged == true && startsWith(github.ref, 'refs/heads/release-v')
+  build:
+    if: startsWith(github.ref, 'refs/heads/release-v')
     runs-on: ubuntu-latest
     strategy:
       matrix:
