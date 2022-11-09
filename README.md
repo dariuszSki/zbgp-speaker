@@ -80,5 +80,5 @@ To create a stackdump in runtime, please run this command:
  sudo kill -3 $(pidof iptables-bgp-scraper)
 ```
 
-# Important Note - Contributing
-When submitting PRs, one needs to create them in draft form. The release workflow will only be triggered when the state of PR changes to `ready for review`. In draft form, one you will be allowed to make changes to PR without triggering the release workflow.
+# Important Note
+The release workflow that creates the release binary and uploads it to the release folder will only be triggered when the state of PR changes to `ready for review`.
