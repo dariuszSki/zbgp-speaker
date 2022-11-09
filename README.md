@@ -79,3 +79,6 @@ To create a stackdump in runtime, please run this command:
 ```bash
  sudo kill -3 $(pidof iptables-bgp-scraper)
 ```
+
+# Important Note
+The release workflow that creates the release binary and uploads it to the release folder will only be triggered when the state of PR changes to `ready for review`.
