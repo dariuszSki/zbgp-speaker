@@ -2,18 +2,21 @@ package cmd
 
 import (
 	"context"
+	"io"
+	"net"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/coreos/go-iptables/iptables"
 	gobgpApi "github.com/osrg/gobgp/v3/api"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	apb "google.golang.org/protobuf/types/known/anypb"
-	"io"
-	"net"
-	"os"
-	"strconv"
-	"strings"
-	"time"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -22,12 +25,12 @@ const (
 	dstChain    = "NF-INTERCEPT"
 )
 
-type contextLogData struct {
+type ContextLogData struct {
 	topic string
 	value error
 }
 
-type optsGobgpd struct {
+type OptsGobgpd struct {
 	ConfigFile      string
 	ConfigType      string
 	LogLevel        string
@@ -44,6 +47,56 @@ func readIptablesChain(ipt *iptables.IPTables, table, srcChain, dstChain string)
 		logger.WithError(err).Error("failed to unlink chain")
 	}
 	return ruleList
+}
+
+func readZfwMapRules(zfwPath string) []string {
+	logger.Debugf("reading data from '%v'", zfwPath)
+
+	cmd := exec.Command(zfwPath, "-L")
+	output, err := cmd.Output()
+	if err != nil {
+		logger.WithError(err).Error("failed to read data from zfw")
+	}
+
+	return strings.Split(string(output), "\n")
+}
+
+func readYamlRouterConfig(configPath string) interface{} {
+
+	// Create a map to store the parsed config data.
+	var routerConfig map[interface{}]interface{}
+
+	// Read the YAML file.
+	source, err := os.ReadFile(configPath)
+	if err != nil {
+		logger.WithError(err).Error("failed to read data from config file")
+	}
+
+	// Unmarshal the YAML content
+	err = yaml.Unmarshal(source, &routerConfig)
+	if err != nil {
+		logger.WithError(err).Error("failed to convert byte data into yaml struct")
+	}
+
+	// Search for the key "listeners".
+	for key, value := range routerConfig {
+		if key == "listeners" {
+			if m, ok := value.([]interface{}); ok {
+				for _, n := range m {
+					if s, ok := n.(map[interface{}]interface{}); ok {
+						for k, v := range s {
+							if k == "binding" && v == "tunnel" {
+								if t, ok := s["options"].(map[interface{}]interface{}); ok {
+									return t["mode"]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func contains(a []string, x string) bool {
@@ -73,38 +126,70 @@ func getRoutes(pl chan []string, dbscantime *int) {
 	for {
 		deadline := time.Now().Add(1000 * time.Millisecond)
 
-		ipt, err := iptables.New()
-		if err != nil {
-			logger.Infof("Failed to initialize iptables handle")
-		}
-		rules := readIptablesChain(ipt, mangleTable, srcChain, dstChain)
 		gobgpList := []string{}
+		var rules []string
+		mode := ""
+		// Check if iptables or zfw map is the data source
+		proxyMode := readYamlRouterConfig("/opt/netfoundry/ziti/ziti-router/config.yml")
+		logger.Debugf("%s", proxyMode)
+		if str, ok := proxyMode.(string); ok {
+			mode = str
+		}
+
+		if mode == "tproxy" {
+			logger.Infof("true")
+			// Get the iptables handle and read the rules from the NF-INTERCEPT chain.
+			ipt, err := iptables.New()
+			if err != nil {
+				logger.Infof("Failed to initialize iptables handle")
+				continue
+			}
+			rules = readIptablesChain(ipt, mangleTable, srcChain, dstChain)
+		} else if strings.HasPrefix(mode, "tproxy:") {
+			logger.Infof("false")
+			// Read ZFW Map
+			rules = readZfwMapRules("/opt/openziti/bin/zfw")
+		} else {
+			// Return empty list
+			pl <- gobgpList
+		}
+
+		// Create a map of CIDRs to bools to track whether a CIDR has already been added to the gobgpList.
 		keys := make(map[string]bool)
+
+		// Iterate over the rules and add each CIDR to the gobgpList if it hasn't already been added.
 		for _, rule := range rules {
 			splitString := strings.Fields(rule)
 			var cidrString string
+			_, defaultRoute, _ := net.ParseCIDR("0.0.0.0/0")
 			for _, value := range splitString {
 				_, cidr, err := net.ParseCIDR(value)
-				if err == nil {
-					cidrString = cidr.String()
+				if err != nil || cidr.String() == defaultRoute.String() {
+					continue
 				}
+				cidrString = cidr.String()
 			}
-			/* Eliminate duplicates */
+
+			// Only add the CIDR to the gobgpList if it hasn't already been added.
 			if _, subValue := keys[cidrString]; !subValue {
 				keys[cidrString] = true
 				if len(cidrString) != 0 {
 					gobgpList = append(gobgpList, cidrString)
 				}
 			}
+			logger.Infof("%v", gobgpList)
 		}
 
+		// Send the gobgpList to the channel.
 		pl <- gobgpList
+
+		// Log the routes that will be advertised.
 		logger.WithFields(map[string]interface{}{"function": "getRoutes"}).Debugf("routes to advertise %v", gobgpList)
-
 		deadline2 := time.Now().Add(1000 * time.Millisecond)
-		logger.Infof("get routes: duration %v", deadline2.Sub(deadline))
+		logger.WithFields(map[string]interface{}{"function": "getRoutes"}).Debugf("it took  %v to get routes", deadline2.Sub(deadline))
+		logger.WithFields(map[string]interface{}{"function": "getRoutes"}).Debugf("sleeping for %d s before looping again", *dbscantime)
 
-		logger.WithFields(map[string]interface{}{"function": "getRoutes"}).Warnf("sleeping for %d s before looping again", *dbscantime)
+		// Sleep for the specified amount of time before looping again.
 		time.Sleep(time.Duration(*dbscantime) * time.Second)
 
 	}
@@ -147,7 +232,7 @@ func zgbp(cmd *cobra.Command, args []string) {
 	rflag, _ := cmd.Flags().GetBool("graceful-restart")
 	nflag, _ := cmd.Flags().GetBool("sdnotify")
 
-	var opts optsGobgpd
+	var opts OptsGobgpd
 	opts.ConfigFile = cflag
 	opts.ConfigType = tflag
 	opts.GrpcHosts = aflag
@@ -160,6 +245,8 @@ func zgbp(cmd *cobra.Command, args []string) {
 		}()
 		time.Sleep(15 * time.Second)
 	}
+
+	// Connect to the GoBGP server.
 	conn, err := grpc.DialContext(context.TODO(), ":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.WithError(err).Error("fail to connect to gobgp")
@@ -171,24 +258,24 @@ func zgbp(cmd *cobra.Command, args []string) {
 		}
 	}(conn)
 
-	//client channel to gobgp api server
+	// Get the global BGP configuration.
 	client := gobgpApi.NewGobgpApiClient(conn)
 
-	/* requesting bgp global config */
+	// Get the global BGP configuration.
 	bgpConfig, err := client.GetBgp(context.Background(), &gobgpApi.GetBgpRequest{})
 	if err != nil {
 		logger.WithError(err).Error("fail to get gobgp info with error")
 		os.Exit(1)
 	}
-	logger.Data(&contextLogData{"Config", nil}).Debug(bgpConfig.Global.String())
+	logger.Data(&ContextLogData{"Config", nil}).Debug(bgpConfig.Global.String())
 	asnLocal := getAsn(bgpConfig.Global.String())
 	logger.Info(asnLocal)
 
-	/* announce or withdraw routes */
+	// Get the list of prefixes from the iptables NF-INTERCEPT chain.
 	dbscantime := 30
 	pl := make(chan []string)
-
 	go getRoutes(pl, &dbscantime)
+
 	a1, _ := apb.New(&gobgpApi.OriginAttribute{
 		Origin: 0,
 	})
@@ -205,10 +292,9 @@ func zgbp(cmd *cobra.Command, args []string) {
 	})
 	attrs := []*apb.Any{a1, a2, a3}
 
-	/* main for loop */
-
+	// Start the main loop.
 	for {
-
+		// Get the list of new prefixes from the iptables NF-INTERCEPT chain.
 		newPrefixList := <-pl
 
 		var listReader gobgpApi.GobgpApi_ListPathClient

@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/osrg/gobgp/v3/pkg/config"
 	"github.com/osrg/gobgp/v3/pkg/server"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func stopServer(s *server.BgpServer, useSdNotify bool) {
@@ -24,7 +25,7 @@ func stopServer(s *server.BgpServer, useSdNotify bool) {
 	}
 }
 
-func zgbpd(opts optsGobgpd) {
+func zgbpd(opts OptsGobgpd) {
 
 	/* watch for os signal interrupts to clean up resources and exit gracefully */
 	sigCh := make(chan os.Signal, 1)
@@ -55,14 +56,14 @@ func zgbpd(opts optsGobgpd) {
 	/* Read the config file for the gobgp server */
 	initialConfig, err := config.ReadConfigFile(opts.ConfigFile, opts.ConfigType)
 	if err != nil {
-		logger.Data(&contextLogData{"Config", err}).Fatalf(
+		logger.Data(&ContextLogData{"Config", err}).Fatalf(
 			"Can't read config file %s", opts.ConfigFile)
 	}
-	logger.Data(&contextLogData{"Config", nil}).Info("Finished reading the config file")
+	logger.Data(&ContextLogData{"Config", nil}).Info("Finished reading the config file")
 	/* Apply the configs to the gobgp server */
 	currentConfig, err := config.InitialConfig(context.Background(), s, initialConfig, opts.GracefulRestart)
 	if err != nil {
-		logger.Data(&contextLogData{"Config", err}).Fatalf(
+		logger.Data(&ContextLogData{"Config", err}).Fatalf(
 			"Failed to apply initial configuration %s", opts.ConfigFile)
 	}
 	for sig := range sigCh {

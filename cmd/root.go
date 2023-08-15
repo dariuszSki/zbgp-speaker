@@ -25,7 +25,7 @@ func Execute() error {
 func init() {
 	options := pfxlog.DefaultOptions().SetTrimPrefix("github.com/netfoundry/ziti-bgp").SetAbsoluteTime().Color()
 	options.DataFielder = func(v interface{}, l *logrus.Entry) *logrus.Entry {
-		cd, ok := v.(*contextLogData)
+		cd, ok := v.(*ContextLogData)
 		if ok {
 			return l.WithFields(map[string]interface{}{
 				"topic": cd.topic,
