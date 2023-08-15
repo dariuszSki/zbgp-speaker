@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net"
 	"os"
 	"os/exec"
+	"os/user"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/coreos/go-iptables/iptables"
@@ -137,16 +140,14 @@ func getRoutes(pl chan []string, dbscantime *int) {
 		}
 
 		if mode == "tproxy" {
-			logger.Infof("true")
 			// Get the iptables handle and read the rules from the NF-INTERCEPT chain.
 			ipt, err := iptables.New()
 			if err != nil {
-				logger.Infof("Failed to initialize iptables handle")
+				logger.Warningf("Failed to initialize iptables handle")
 				continue
 			}
 			rules = readIptablesChain(ipt, mangleTable, srcChain, dstChain)
 		} else if strings.HasPrefix(mode, "tproxy:") {
-			logger.Infof("false")
 			// Read ZFW Map
 			rules = readZfwMapRules("/opt/openziti/bin/zfw")
 		} else {
@@ -177,7 +178,7 @@ func getRoutes(pl chan []string, dbscantime *int) {
 					gobgpList = append(gobgpList, cidrString)
 				}
 			}
-			logger.Infof("%v", gobgpList)
+			logger.Debugf("%v", gobgpList)
 		}
 
 		// Send the gobgpList to the channel.
@@ -194,6 +195,55 @@ func getRoutes(pl chan []string, dbscantime *int) {
 
 	}
 
+}
+
+func getHealthChecks(hc chan int) {
+	scriptPath := "/opt/netfoundry/erhchecker.pyz"
+	for {
+		// Calling Sleep method
+		time.Sleep(10 * time.Second)
+		logger.Infof("run edge router hc script @'%v'", scriptPath)
+
+		var exitCode int
+		var outbuf, errbuf bytes.Buffer
+
+		// Lookup user ids
+		username := "ziggy"
+		userObj, err := user.Lookup(username)
+		if err != nil {
+			logger.WithError(err).Error("failed to lookup user or user does not exist")
+		}
+		uId, _ := strconv.ParseUint(userObj.Uid, 10, 32)
+		gId, _ := strconv.ParseUint(userObj.Gid, 10, 32)
+		logger.Debugf("user id %v, user group %v", uId, gId)
+
+		// Set up the command user privileges and run it
+		cmd := exec.Command("/usr/bin/python3", scriptPath)
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uId), Gid: uint32(gId)}
+		cmd.Stdout = &outbuf
+		cmd.Stderr = &errbuf
+		err = cmd.Run()
+		stdout := outbuf.String()
+		stderr := errbuf.String()
+
+		// Process errors
+		if err != nil {
+			// try to get the exit code
+			if exitError, ok := err.(*exec.ExitError); ok {
+				ws := exitError.Sys().(syscall.WaitStatus)
+				exitCode = ws.ExitStatus()
+			}
+		} else {
+			// success, exitCode should be 0 if go is ok
+			ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
+			exitCode = ws.ExitStatus()
+		}
+
+		logger.Infof("command result, stdout: %v, stderr: %v, exitCode: %v", stdout, stderr, exitCode)
+
+		hc <- exitCode
+	}
 }
 
 func init() {
@@ -271,10 +321,14 @@ func zgbp(cmd *cobra.Command, args []string) {
 	asnLocal := getAsn(bgpConfig.Global.String())
 	logger.Info(asnLocal)
 
-	// Get the list of prefixes from the iptables NF-INTERCEPT chain.
+	// Get the list of prefixes from ziti services.
 	dbscantime := 30
 	pl := make(chan []string)
 	go getRoutes(pl, &dbscantime)
+
+	// Get health checks for edge router.
+	hc := make(chan int)
+	go getHealthChecks(hc)
 
 	a1, _ := apb.New(&gobgpApi.OriginAttribute{
 		Origin: 0,
@@ -294,8 +348,15 @@ func zgbp(cmd *cobra.Command, args []string) {
 
 	// Start the main loop.
 	for {
-		// Get the list of new prefixes from the iptables NF-INTERCEPT chain.
+		// Get the list of new prefixes from ziti services
 		newPrefixList := <-pl
+
+		// Get health checks for edge router
+		healthCheckReturnCode := <-hc
+		logger.Debugf("%v", healthCheckReturnCode)
+		if healthCheckReturnCode == 1 {
+			newPrefixList = []string{}
+		}
 
 		var listReader gobgpApi.GobgpApi_ListPathClient
 		var listRequest = gobgpApi.ListPathRequest{
@@ -315,7 +376,7 @@ func zgbp(cmd *cobra.Command, args []string) {
 
 		currentPrefixList := []string{}
 		for {
-			/* Read the gobgp global route table and build a list */
+			// Read the gobgp global route table and build a list
 			path, err := listReader.Recv()
 
 			if err == io.EOF {
